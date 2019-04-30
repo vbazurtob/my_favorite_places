@@ -1,0 +1,5 @@
+/// Don't put any auth key here. This is a flat text file only meant to
+/// contain plain text
+class GMapsApiKey{
+  static final String apiKey = 'DONT_PUT_THE_KEY_HERE!!!';
+}
