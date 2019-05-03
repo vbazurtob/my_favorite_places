@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:core' ;
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'base_bloc.dart';
@@ -9,7 +10,17 @@ class MainMapBloc implements BaseBloc{
   final MainMapProvider mainMapProvider = MainMapProvider();
   final markersController = StreamController();
 
-  Stream get  getMarkers => markersController.stream;
+  Stream get  getMarkersViaStream => markersController.stream;
+
+  Map<MarkerId, Marker> getMarkersViaProvider(){
+    return mainMapProvider?.markers;
+  }
+
+  Marker getMarkerById(String id){
+    MarkerId mId = MarkerId(id);
+    Map<MarkerId, Marker> markers = getMarkersViaProvider();
+    return markers != null ? (   markers.containsKey(mId) ? markers[mId] : markers    ) :  markers ;
+  }
 
   void addMarker(Marker marker){
     mainMapProvider.addMarker(marker);
