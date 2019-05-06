@@ -260,6 +260,9 @@ class WidgetOptionsDialog extends StatelessWidget {
 
   void _onDeleteMarker() {
 
+    mainMapBloc.removeMarker(_marker);
+
+    ProviderB
   }
 
 }

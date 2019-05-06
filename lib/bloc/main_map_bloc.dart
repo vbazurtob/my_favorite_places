@@ -27,6 +27,11 @@ class MainMapBloc implements BaseBloc{
     markersController.sink.add(mainMapProvider.markers);
   }
 
+  void removeMarker(Marker marker){
+    mainMapProvider.deleteMarker(marker);
+    markersController.sink.add(mainMapProvider.markers);
+  }
+
   @override
   void dispose() {
     markersController.close();
