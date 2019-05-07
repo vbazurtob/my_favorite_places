@@ -9,8 +9,14 @@ class MainMapBloc implements BaseBloc{
 
   final MainMapProvider mainMapProvider = MainMapProvider();
   final markersController = StreamController();
+  final addressSearchBarController = StreamController();
+  final markerActionsDialogController = StreamController();
+
 
   Stream get  getMarkersViaStream => markersController.stream;
+  Stream get  addressSearchBarStream => addressSearchBarController.stream;
+  Stream get  markerActionsDialogStream => markerActionsDialogController.stream;
+
 
   Map<MarkerId, Marker> getMarkersViaProvider(){
     return mainMapProvider?.markers;
@@ -32,9 +38,28 @@ class MainMapBloc implements BaseBloc{
     markersController.sink.add(mainMapProvider.markers);
   }
 
+  void showAddressSearchBar(){
+    addressSearchBarController.sink.add(true);
+  }
+
+  void hideAddressSearchBar(){
+    addressSearchBarController.sink.add(false);
+  }
+
+  void showMarkerActionsDialog(){
+    markerActionsDialogController.sink.add(true);
+  }
+
+  void hideMarkerActionsDialog(){
+    markerActionsDialogController.sink.add(false);
+  }
+
+
   @override
   void dispose() {
     markersController.close();
+    addressSearchBarController.close();
+    markerActionsDialogController.close();
   }
 
 }

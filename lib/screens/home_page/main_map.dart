@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_favorite_places/bloc/main_map_bloc.dart';
 import 'package:my_favorite_places/provider/main_map_provider.dart';
 import 'package:uuid/uuid.dart';
+
 import 'custom_marker.dart';
 
 class MainMap extends StatefulWidget {
@@ -15,8 +16,7 @@ class MainMap extends StatefulWidget {
 class MainMapState extends State<MainMap> {
   Completer<GoogleMapController> _controller = Completer();
 
-  bool _searchByAddress = false;
-  bool _markerActions = false;
+//  bool _markerActions = false;
   CustomMarker _selectedMarker;
 
   static final CameraPosition _kGooglePlex = CameraPosition(
@@ -48,24 +48,26 @@ class MainMapState extends State<MainMap> {
               return mapWidget(snapshot);
             },
           ),
-          (_searchByAddress) ? _getControlButtons() : Text(''),
-          (_markerActions) ? WidgetOptionsDialog(
-            _selectedMarker
-          ) : Text(''),
+          _getSearchAddressBar(),
 
-          (!_markerActions) ?_getFabButtonLayer(): Text(''),
+          _MainMapStateProvider(
+            child: MarkerOptionsDialog(),
+            mapBloc: mainMapBloc,
+          ),
+
+//          (_markerActions) ? WidgetOptionsDialog(
+//            _selectedMarker
+//          ) : Text(''),
+
+//          (!_markerActions)
+          mainMapBloc.mainMapProvider.markerActionsDialogIsNotVisible
+              ? _getFabButtonLayer()
+              : Text(''),
         ],
       ),
       appBar: AppBar(
         title: Text('Demo Gmaps'),
       ),
-//      floatingActionButton: FloatingActionButton.extended(
-//        onPressed: _showSearchBar,
-//        label: Text('By Address'),
-//        icon: Icon(Icons.search),
-//        elevation: 0.0,
-//
-//      ),
     );
   }
 
@@ -87,45 +89,53 @@ class MainMapState extends State<MainMap> {
     );
   }
 
-  Widget _getControlButtons() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        Card(
-          color: Colors.white,
-          child: Column(
-            children: <Widget>[
-              Row(
+  Widget _getSearchAddressBar() {
+    return StreamBuilder(
+      stream: mainMapBloc.addressSearchBarStream,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        return (snapshot.data == true)
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Please enter an address or place name...'),
+                  Card(
+                    color: Colors.white,
+                    child: Column(
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    hintText:
+                                        'Please enter an address or place name...'),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.close),
+                              onPressed: () async {
+                                mainMapBloc.hideAddressSearchBar();
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () async {
-                      setState(() {
-                        _searchByAddress = false;
-                      });
-                    },
-                  ),
                 ],
-              ),
-            ],
-          ),
-        ),
-      ],
+              )
+            : Text('');
+      },
     );
   }
 
   void _onTapMap(LatLng position) {
-
-    setState(() {
-      _markerActions = false;
-    });
+    print(
+        'ACTIONS ${mainMapBloc.mainMapProvider.markerActionsDialogIsVisible}');
+    mainMapBloc.hideMarkerActionsDialog();
+//    setState(() {
+//      _markerActions = false;
+//    });
 
     var uuid = new Uuid();
 
@@ -135,56 +145,43 @@ class MainMapState extends State<MainMap> {
         markerId: MarkerId(newMarkerId),
         position: position,
         infoWindow: InfoWindow(title: "Marker $newMarkerId", snippet: "*"),
-
-        onTap: () => onTapMarker(newMarkerId)
-    );
+        onTap: () => onTapMarker(newMarkerId));
     mainMapBloc.addMarker(newMarker);
   }
 
   void _showSearchBar() {
-    setState(() {
-      _searchByAddress = true;
-    });
+    mainMapBloc.showAddressSearchBar();
   }
 
-  void onTapMarker(String markerId){
+  void onTapMarker(String markerId) {
+
+    mainMapBloc.showMarkerActionsDialog();
+    //TODO: Should Hide FAB HERE TOO
+
 
     setState(() {
-        _markerActions = true;
-        _selectedMarker =  mainMapBloc.getMarkerById(markerId)  ;
+      _selectedMarker = mainMapBloc.getMarkerById(markerId);
 //        print('Selected : $_selectedMarker ');
-      });
+    });
 
   }
 
   Widget _getFabButtonLayer() {
-
     return Column(
-//      crossAxisAlignment: CrossAxisAlignment.stretc,
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
-
-         ButtonBar(
-           children: <Widget>[
-             FloatingActionButton.extended(
-               onPressed: _showSearchBar,
-               label: Text('By Address'),
-               icon: Icon(Icons.search),
-               elevation: 0.0,
-             ),
-           ],
-//          child:
-
-
+        ButtonBar(
+          children: <Widget>[
+            FloatingActionButton.extended(
+              onPressed: _showSearchBar,
+              label: Text('By Address'),
+              icon: Icon(Icons.search),
+              elevation: 0.0,
+            ),
+          ],
         ),
-
-
       ],
-
-
-
     );
-
   }
 
   /// UNUSED DEMO CODE
@@ -209,60 +206,118 @@ class MainMapState extends State<MainMap> {
 //  print('Prediction ' + p.toString());
 }
 
-class WidgetOptionsDialog extends StatelessWidget {
+//class WidgetOptionsDialog extends StatelessWidget {
+//
+//  final CustomMarker _marker;
+//
+//  WidgetOptionsDialog(this._marker);
+//
+//
+//
+//  @override
+//  Widget build(BuildContext context)
+//  {
+//
+//    return _MainMapStateProvider(
+//      mapBloc: mainMapBloc,
+//      child: MarkerOptionsDialog(marker: _marker, onFavPlace: (){
+//        _onFavPlace(context);
+//      }),
+//    )
+//
+//
+//
+//
+//      ;
+//  }
+//
+//  void _onFavPlace(BuildContext context) {
+//    print('Faved');
+////    _MainMapStateProvider.of(context);
+//  }
+//
+//  void _onDeleteMarker(BuildContext context) {
+//
+////    context.of();
+////    mainMapBloc.removeMarker(_marker);
+//
+////    _MainMapStateProvider.of(context).mapBloc.;
+//
+//
+//
+//
+//  }
+//
+//}
 
-  final CustomMarker _marker;
+class MarkerOptionsDialog extends StatelessWidget {
+  final CustomMarker marker;
+  final Function onFavPlace;
+  final Function onDeleteMarker;
 
-  WidgetOptionsDialog(this._marker);
-
-
+  MarkerOptionsDialog(
+      {@required this.marker, @required this.onFavPlace, this.onDeleteMarker});
 
   @override
   Widget build(BuildContext context) {
-    return
+    MainMapBloc mapBloc = _MainMapStateProvider.of(context).mapBloc;
 
-      Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-
-          Card(
-              child: Container(
-                child: ButtonBar(
-                  alignment: MainAxisAlignment.start,
+    return StreamBuilder(
+        stream: mapBloc.markerActionsDialogStream,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          return (snapshot.data)
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    IconButton(
-                      color: ( _marker != null && _marker?.bookmarked == true ) ? Colors.red : Colors.blueGrey ,
-                      icon: Icon(Icons.favorite),
-                      iconSize: 30,
-                      onPressed: _onFavPlace,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      iconSize: 30,
-                      onPressed: _onDeleteMarker,
-                      color: Colors.blueGrey ,
-                    ),
+                    Card(
+                        child: Container(
+                      child: ButtonBar(
+                        alignment: MainAxisAlignment.start,
+                        children: <Widget>[
+                          IconButton(
+                            color:
+                                (marker != null && marker?.bookmarked == true)
+                                    ? Colors.red
+                                    : Colors.blueGrey,
+                            icon: Icon(Icons.favorite),
+                            iconSize: 30,
+                            onPressed: onFavPlace,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            iconSize: 30,
+                            onPressed: () => onDeleteMarker(context),
+                            color: Colors.blueGrey,
+                          ),
+                        ],
+                      ),
+                    ))
                   ],
-                ),
-              ))
+                )
+              : Text("");
+        });
+  }
+}
 
-        ],
-      )
+class _MainMapStateProvider extends InheritedWidget {
+  final MainMapBloc mapBloc;
 
+  const _MainMapStateProvider(
+      {Key key, @required Widget child, @required this.mapBloc})
+      : assert(child != null),
+        super(key: key, child: child);
 
-      ;
+  static _MainMapStateProvider of(BuildContext context) {
+    return context.inheritFromWidgetOfExactType(_MainMapStateProvider);
   }
 
-  void _onFavPlace() {
-
-
+  @override
+  bool updateShouldNotify(_MainMapStateProvider old) {
+    return old.mapBloc.mainMapProvider.markerActionsDialogIsNotVisible !=
+            mapBloc.mainMapProvider.markerActionsDialogIsNotVisible ||
+        old.mapBloc.mainMapProvider.searchBarIsNotVisible !=
+            mapBloc.mainMapProvider.searchBarIsNotVisible ||
+        old.mapBloc.mainMapProvider.markers.length !=
+            mapBloc.mainMapProvider.markers.length;
   }
-
-  void _onDeleteMarker() {
-
-    mainMapBloc.removeMarker(_marker);
-
-    ProviderB
-  }
-
 }

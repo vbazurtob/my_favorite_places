@@ -1,9 +1,8 @@
-//import 'ma';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CustomMarker extends Marker{
-  bool bookmarked = false;
+  final bool bookmarked;
 
   CustomMarker({this.bookmarked, markerId, position, infoWindow, onTap}) : super(
 
@@ -14,11 +13,4 @@ class CustomMarker extends Marker{
         onTap: onTap
   );
 
-//  Marker(
-//  markerId: MarkerId(newMarkerId),
-//  position: position,
-//  infoWindow: InfoWindow(title: "Marker $newMarkerId", snippet: "*"),
-//
-//  onTap: () => onTapMarker(newMarkerId)
-//  );
 }
