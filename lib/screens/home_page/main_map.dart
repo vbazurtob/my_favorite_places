@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_favorite_places/bloc/main_map_bloc.dart';
+import 'package:my_favorite_places/main.dart';
 import 'package:my_favorite_places/provider/main_map_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,20 +16,13 @@ class MainMap extends StatefulWidget {
 
 class MainMapState extends State<MainMap> {
   Completer<GoogleMapController> _controller = Completer();
-
-//  bool _markerActions = false;
-  CustomMarker _selectedMarker;
+//  CustomMarker _selectedMarker;
 
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
 
-//  static final CameraPosition _kLake = CameraPosition(
-//      bearing: 192.8334901395799,
-//      target: LatLng(37.43296265331129, -122.08832357078792),
-//      tilt: 59.440717697143555,
-//      zoom: 19.151926040649414);
 
   static final CameraPosition _home = CameraPosition(
     target: LatLng(-141.555, -56.4555),
@@ -48,21 +42,22 @@ class MainMapState extends State<MainMap> {
               return mapWidget(snapshot);
             },
           ),
-          _getSearchAddressBar(),
+          _getSearchAddressBar(), // Search Bar
 
           _MainMapStateProvider(
-            child: MarkerOptionsDialog(),
+            child: MarkerOptionsDialog(
+
+              onDeleteMarker: (){
+                mainMapBloc.removeMarker(mainMapBloc.getSelectedMarker());
+              },
+
+            ),
             mapBloc: mainMapBloc,
-          ),
 
-//          (_markerActions) ? WidgetOptionsDialog(
-//            _selectedMarker
-//          ) : Text(''),
+          ), // Marker Actions Dialog
 
-//          (!_markerActions)
-          mainMapBloc.mainMapProvider.markerActionsDialogIsNotVisible
-              ? _getFabButtonLayer()
-              : Text(''),
+          _getFabButtonLayer(), // FAB Button
+
         ],
       ),
       appBar: AppBar(
@@ -130,15 +125,11 @@ class MainMapState extends State<MainMap> {
   }
 
   void _onTapMap(LatLng position) {
-    print(
-        'ACTIONS ${mainMapBloc.mainMapProvider.markerActionsDialogIsVisible}');
+
     mainMapBloc.hideMarkerActionsDialog();
-//    setState(() {
-//      _markerActions = false;
-//    });
 
+    // Generate new marker
     var uuid = new Uuid();
-
     final newMarkerId = "place_${uuid.v4()}";
 
     Marker newMarker = CustomMarker(
@@ -154,56 +145,42 @@ class MainMapState extends State<MainMap> {
   }
 
   void onTapMarker(String markerId) {
-
     mainMapBloc.showMarkerActionsDialog();
-    //TODO: Should Hide FAB HERE TOO
+    mainMapBloc.setSelectedMarker(mainMapBloc.getMarkerById(markerId));
 
-
-    setState(() {
-      _selectedMarker = mainMapBloc.getMarkerById(markerId);
-//        print('Selected : $_selectedMarker ');
-    });
-
+    print('Selected ${mainMapBloc.getSelectedMarker()}');
+//    setState(() {
+//      _selectedMarker = mainMapBloc.getMarkerById(markerId);
+////        print('Selected : $_selectedMarker ');
+//    });
   }
 
   Widget _getFabButtonLayer() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        ButtonBar(
-          children: <Widget>[
-            FloatingActionButton.extended(
-              onPressed: _showSearchBar,
-              label: Text('By Address'),
-              icon: Icon(Icons.search),
-              elevation: 0.0,
-            ),
-          ],
-        ),
-      ],
+    return StreamBuilder(
+      stream: mainMapBloc.markerActionsDialogStream,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        return (mainMapBloc.mainMapProvider.markerActionsDialogIsVisible)
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  ButtonBar(
+                    children: <Widget>[
+                      FloatingActionButton.extended(
+                        onPressed: _showSearchBar,
+                        label: Text('By Address'),
+                        icon: Icon(Icons.search),
+                        elevation: 0.0,
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Text('');
+      },
     );
   }
 
-  /// UNUSED DEMO CODE
-  ///
 
-//
-//  Future<void> _goToHome() async {
-//    final GoogleMapController controller = await _controller.future;
-//    controller.animateCamera(CameraUpdate.newCameraPosition(_home));
-//  }
-
-// GOOGLE PLACES CODE
-//
-//  Prediction p = await PlacesAutocomplete.show(
-//  context: context,
-//  apiKey: GMapsApiKey
-//      .apiKey, //Places has a quota of 1 request.
-//  mode: Mode.overlay, // Mode.fullscreen
-//  language: "en",
-//  components: [new Component(Component.country, "us")]);
-//
-//  print('Prediction ' + p.toString());
 }
 
 //class WidgetOptionsDialog extends StatelessWidget {
@@ -265,7 +242,8 @@ class MarkerOptionsDialog extends StatelessWidget {
     return StreamBuilder(
         stream: mapBloc.markerActionsDialogStream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          return (snapshot.data)
+//          print('SNAP ${snapshot.data}');
+          return (snapshot.data == true)
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
@@ -286,7 +264,7 @@ class MarkerOptionsDialog extends StatelessWidget {
                           IconButton(
                             icon: Icon(Icons.delete),
                             iconSize: 30,
-                            onPressed: () => onDeleteMarker(context),
+                            onPressed: onDeleteMarker,
                             color: Colors.blueGrey,
                           ),
                         ],
@@ -321,3 +299,26 @@ class _MainMapStateProvider extends InheritedWidget {
             mapBloc.mainMapProvider.markers.length;
   }
 }
+
+
+
+/// UNUSED DEMO CODE
+///
+
+//
+//  Future<void> _goToHome() async {
+//    final GoogleMapController controller = await _controller.future;
+//    controller.animateCamera(CameraUpdate.newCameraPosition(_home));
+//  }
+
+// GOOGLE PLACES CODE
+//
+//  Prediction p = await PlacesAutocomplete.show(
+//  context: context,
+//  apiKey: GMapsApiKey
+//      .apiKey, //Places has a quota of 1 request.
+//  mode: Mode.overlay, // Mode.fullscreen
+//  language: "en",
+//  components: [new Component(Component.country, "us")]);
+//
+//  print('Prediction ' + p.toString());
