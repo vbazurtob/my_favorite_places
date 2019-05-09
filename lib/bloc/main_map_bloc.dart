@@ -41,19 +41,23 @@ class MainMapBloc implements BaseBloc{
   }
 
   void showAddressSearchBar(){
-    addressSearchBarController.sink.add(true);
+    mainMapProvider.searchByAddress = true;
+    addressSearchBarController.sink.add(mainMapProvider.searchByAddress );
   }
 
   void hideAddressSearchBar(){
-    addressSearchBarController.sink.add(false);
+    mainMapProvider.searchByAddress = false;
+    addressSearchBarController.sink.add(mainMapProvider.searchByAddress);
   }
 
   void showMarkerActionsDialog(){
-    markerActionsDialogController.sink.add(true);
+    mainMapProvider.markerActions = true;
+    markerActionsDialogController.sink.add(mainMapProvider.markerActions);
   }
 
   void hideMarkerActionsDialog(){
-    markerActionsDialogController.sink.add(false);
+    mainMapProvider.markerActions = false;
+    markerActionsDialogController.sink.add(mainMapProvider);
   }
 
   CustomMarker getSelectedMarker(){
@@ -61,7 +65,8 @@ class MainMapBloc implements BaseBloc{
   }
 
   void setSelectedMarker(CustomMarker marker){
-    selectedMarkerController.sink.add(marker);
+    mainMapProvider.selectedMarker = marker;
+    selectedMarkerController.sink.add(mainMapProvider.selectedMarker);
   }
 
 
