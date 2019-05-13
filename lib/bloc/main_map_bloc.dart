@@ -11,7 +11,8 @@ class MainMapBloc implements BaseBloc{
   final MainMapProvider mainMapProvider = MainMapProvider();
   final markersController = StreamController();
   final addressSearchBarController = StreamController();
-  final markerActionsDialogController = StreamController();
+  // Define broadcast because this stream is listened in more than 1 place in the widget tree
+  final markerActionsDialogController = StreamController.broadcast();
   final selectedMarkerController = StreamController();
 
   Stream get  getMarkersViaStream => markersController.stream;
@@ -40,6 +41,8 @@ class MainMapBloc implements BaseBloc{
     markersController.sink.add(mainMapProvider.markers);
   }
 
+
+
   void showAddressSearchBar(){
     mainMapProvider.searchByAddress = true;
     addressSearchBarController.sink.add(mainMapProvider.searchByAddress );
@@ -60,14 +63,19 @@ class MainMapBloc implements BaseBloc{
     markerActionsDialogController.sink.add(mainMapProvider);
   }
 
-  CustomMarker getSelectedMarker(){
+  Marker getSelectedMarker(){
     return mainMapProvider.selectedMarker;
   }
 
-  void setSelectedMarker(CustomMarker marker){
+  void setSelectedMarker(Marker marker){
     mainMapProvider.selectedMarker = marker;
     selectedMarkerController.sink.add(mainMapProvider.selectedMarker);
   }
+
+//  void favMarker(Marker marker){
+//    mainMapProvider.favMarker(marker.markerId);
+////    selectedMarkerController
+//  }
 
 
   @override

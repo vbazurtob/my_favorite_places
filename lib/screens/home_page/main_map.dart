@@ -3,11 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_favorite_places/bloc/main_map_bloc.dart';
-import 'package:my_favorite_places/main.dart';
 import 'package:my_favorite_places/provider/main_map_provider.dart';
+import 'package:my_favorite_places/screens/home_page/marker_properties.dart';
 import 'package:uuid/uuid.dart';
-
-import 'custom_marker.dart';
 
 class MainMap extends StatefulWidget {
   @override
@@ -16,13 +14,11 @@ class MainMap extends StatefulWidget {
 
 class MainMapState extends State<MainMap> {
   Completer<GoogleMapController> _controller = Completer();
-//  CustomMarker _selectedMarker;
 
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-
 
   static final CameraPosition _home = CameraPosition(
     target: LatLng(-141.555, -56.4555),
@@ -46,20 +42,18 @@ class MainMapState extends State<MainMap> {
 
           _MainMapStateProvider(
             child: MarkerOptionsDialog(
+              onFavPlace: (){
 
-//              marker: mainMapBloc.getSelectedMarker(),
-//              onFavPlace: (){},
-//              onDeleteMarker: (){
-////                mainMapBloc.removeMarker(mainMapBloc.getSelectedMarker());
-//              },
+              },
+              onDeleteMarker: (){
+                mainMapBloc.removeMarker(mainMapBloc.getSelectedMarker());
+              },
 
-            ),
+                ),
             mapBloc: mainMapBloc,
-
           ), // Marker Actions Dialog
 
           _getFabButtonLayer(), // FAB Button
-
         ],
       ),
       appBar: AppBar(
@@ -127,18 +121,18 @@ class MainMapState extends State<MainMap> {
   }
 
   void _onTapMap(LatLng position) {
-
     mainMapBloc.hideMarkerActionsDialog();
 
     // Generate new marker
     var uuid = new Uuid();
     final newMarkerId = "place_${uuid.v4()}";
 
-    Marker newMarker = CustomMarker(
+    Marker newMarker = Marker(
         markerId: MarkerId(newMarkerId),
         position: position,
         infoWindow: InfoWindow(title: "Marker $newMarkerId", snippet: "*"),
         onTap: () => onTapMarker(newMarkerId));
+//    CustomMarker customMarker = CustomMarker( bookmarked: false, marker: newMarker );
     mainMapBloc.addMarker(newMarker);
   }
 
@@ -181,8 +175,6 @@ class MainMapState extends State<MainMap> {
       },
     );
   }
-
-
 }
 
 //class WidgetOptionsDialog extends StatelessWidget {
@@ -230,73 +222,64 @@ class MainMapState extends State<MainMap> {
 //}
 
 class MarkerOptionsDialog extends StatelessWidget {
-  final CustomMarker marker;
+//  final CustomMarker marker;
   final Function onFavPlace;
   final Function onDeleteMarker;
 
   MarkerOptionsDialog(
-      {@required this.marker, @required this.onFavPlace, this.onDeleteMarker});
+      { this.onFavPlace, this.onDeleteMarker }
+      );
 
   @override
   Widget build(BuildContext context) {
     MainMapBloc mapBloc = _MainMapStateProvider.of(context).mapBloc;
+    Marker marker = mapBloc.getSelectedMarker();
+    MarkerProperties markerProperties = mapBloc.mainMapProvider.getMarkerProperties(marker?.markerId);
 
-    print('MAP BLOCK ${mapBloc}');
-
-    //TODO Fix this streambuilder listening to already listened stream somewhere else
-
-    return
-
-
-//      StreamBuilder(
-//        stream: mapBloc.markerActionsDialogStream,
-//        builder: (BuildContext context, AsyncSnapshot snapshot) {
+    return StreamBuilder(
+        stream: mapBloc.markerActionsDialogStream,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
 //          print('SNAP ${snapshot.data}');
-//          return (snapshot.data == true)
-//              ?
-
-              Text('ABC')
-
-//          Column(
-//                  mainAxisAlignment: MainAxisAlignment.end,
-//                  children: <Widget>[
-//                    Card(
-//                        child: Container(
-//                      child: ButtonBar(
-//                        alignment: MainAxisAlignment.start,
-//                        children: <Widget>[
-//                          IconButton(
-//                            color:
-//                                (marker != null && marker?.bookmarked == true)
-//                                    ? Colors.red
-//                                    : Colors.blueGrey,
-//                            icon: Icon(Icons.favorite),
-//                            iconSize: 30,
-//                            onPressed: onFavPlace,
-//                          ),
-//                          IconButton(
-//                            icon: Icon(Icons.delete),
-//                            iconSize: 30,
-//                            onPressed: onDeleteMarker,
-//                            color: Colors.blueGrey,
-//                          ),
-//                        ],
-//                      ),
-//                    ))
-//                  ],
-//                )
-//              : Text("");
-//        });
-
-  ;
+          return (snapshot.data == true)
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Card(
+                        child: Container(
+                      child: ButtonBar(
+                        alignment: MainAxisAlignment.start,
+                        children: <Widget>[
+                          IconButton(
+                            color:
+                                (marker != null && markerProperties?.bookmarked == true)
+                                    ? Colors.red
+                                    : Colors.blueGrey,
+                            icon: Icon(Icons.favorite),
+                            iconSize: 30,
+                            onPressed: onFavPlace,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            iconSize: 30,
+                            onPressed: onDeleteMarker,
+                            color: Colors.blueGrey,
+                          ),
+                        ],
+                      ),
+                    ))
+                  ],
+                )
+              : Text("");
+        });
   }
 }
 
 class _MainMapStateProvider extends InheritedWidget {
   final MainMapBloc mapBloc;
+  final Widget child;
 
   const _MainMapStateProvider(
-      {Key key, @required Widget child, @required this.mapBloc})
+      {Key key, @required this.child, @required this.mapBloc})
       : assert(child != null),
         super(key: key, child: child);
 
@@ -312,13 +295,10 @@ class _MainMapStateProvider extends InheritedWidget {
             mapBloc.mainMapProvider.searchBarIsNotVisible ||
         old.mapBloc.mainMapProvider.markers.length !=
             mapBloc.mainMapProvider.markers.length ||
-        old.mapBloc.mainMapProvider.selectedMarker != mapBloc.mainMapProvider.selectedMarker
-
-    ;
+        old.mapBloc.mainMapProvider.selectedMarker !=
+            mapBloc.mainMapProvider.selectedMarker;
   }
 }
-
-
 
 /// UNUSED DEMO CODE
 ///
