@@ -1,7 +1,6 @@
 
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:my_favorite_places/screens/home_page/custom_marker.dart';
 import 'package:my_favorite_places/screens/home_page/marker_properties.dart';
 
 class MainMapProvider {
@@ -31,23 +30,26 @@ class MainMapProvider {
 
   void deleteMarker(Marker marker){
     markers.remove(marker.markerId);
+    markerProperties.remove(marker.markerId);
   }
 
   MarkerProperties getMarkerProperties(MarkerId markerId){
-    if( markerProperties.containsKey(markerId.toString()) ){
-      return markerProperties[markerId.toString()];
+    if( markerProperties.containsKey(markerId) ){
+      return markerProperties[markerId];
     }
     return null;
   }
 
   void favMarker(MarkerId markerId){
     MarkerProperties mp = getMarkerProperties(markerId);
-    mp.bookmarked = true;
+    print(markerId);
+    print(mp);
+    mp?.bookmarked = true;
   }
 
   void unFavMarker(MarkerId markerId){
     MarkerProperties mp = getMarkerProperties(markerId);
-    mp.bookmarked = false;
+    mp?.bookmarked = false;
   }
 
 }

@@ -43,10 +43,15 @@ class MainMapState extends State<MainMap> {
           _MainMapStateProvider(
             child: MarkerOptionsDialog(
               onFavPlace: (){
+                mainMapBloc.favMarker(mainMapBloc.getSelectedMarker());
+              },
+              onUnFavPlace: (){
+                mainMapBloc.unFavMarker(mainMapBloc.getSelectedMarker());
 
               },
               onDeleteMarker: (){
                 mainMapBloc.removeMarker(mainMapBloc.getSelectedMarker());
+                mainMapBloc.hideMarkerActionsDialog();
               },
 
                 ),
@@ -145,10 +150,7 @@ class MainMapState extends State<MainMap> {
     mainMapBloc.setSelectedMarker(mainMapBloc.getMarkerById(markerId));
 
     print('Selected ${mainMapBloc.getSelectedMarker()}');
-//    setState(() {
-//      _selectedMarker = mainMapBloc.getMarkerById(markerId);
-////        print('Selected : $_selectedMarker ');
-//    });
+
   }
 
   Widget _getFabButtonLayer() {
@@ -177,69 +179,24 @@ class MainMapState extends State<MainMap> {
   }
 }
 
-//class WidgetOptionsDialog extends StatelessWidget {
-//
-//  final CustomMarker _marker;
-//
-//  WidgetOptionsDialog(this._marker);
-//
-//
-//
-//  @override
-//  Widget build(BuildContext context)
-//  {
-//
-//    return _MainMapStateProvider(
-//      mapBloc: mainMapBloc,
-//      child: MarkerOptionsDialog(marker: _marker, onFavPlace: (){
-//        _onFavPlace(context);
-//      }),
-//    )
-//
-//
-//
-//
-//      ;
-//  }
-//
-//  void _onFavPlace(BuildContext context) {
-//    print('Faved');
-////    _MainMapStateProvider.of(context);
-//  }
-//
-//  void _onDeleteMarker(BuildContext context) {
-//
-////    context.of();
-////    mainMapBloc.removeMarker(_marker);
-//
-////    _MainMapStateProvider.of(context).mapBloc.;
-//
-//
-//
-//
-//  }
-//
-//}
-
 class MarkerOptionsDialog extends StatelessWidget {
-//  final CustomMarker marker;
   final Function onFavPlace;
+  final Function onUnFavPlace;
   final Function onDeleteMarker;
 
   MarkerOptionsDialog(
-      { this.onFavPlace, this.onDeleteMarker }
+      { this.onFavPlace, this.onUnFavPlace, this.onDeleteMarker }
       );
 
   @override
   Widget build(BuildContext context) {
     MainMapBloc mapBloc = _MainMapStateProvider.of(context).mapBloc;
     Marker marker = mapBloc.getSelectedMarker();
-    MarkerProperties markerProperties = mapBloc.mainMapProvider.getMarkerProperties(marker?.markerId);
+//    MarkerProperties markerProperties = mapBloc.mainMapProvider.getMarkerProperties(marker?.markerId);
 
     return StreamBuilder(
         stream: mapBloc.markerActionsDialogStream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-//          print('SNAP ${snapshot.data}');
           return (snapshot.data == true)
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -249,15 +206,27 @@ class MarkerOptionsDialog extends StatelessWidget {
                       child: ButtonBar(
                         alignment: MainAxisAlignment.start,
                         children: <Widget>[
-                          IconButton(
-                            color:
-                                (marker != null && markerProperties?.bookmarked == true)
-                                    ? Colors.red
-                                    : Colors.blueGrey,
-                            icon: Icon(Icons.favorite),
-                            iconSize: 30,
-                            onPressed: onFavPlace,
+
+                          StreamBuilder(
+                              stream: mapBloc.markerFavUnfavStream,
+                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                MarkerProperties markerProperties = snapshot.data;
+
+                                print('prop');
+                                print(markerProperties);
+                                return IconButton(
+                                  color:
+                                  (marker != null && markerProperties?.bookmarked == true)
+                                      ? Colors.red
+                                      : Colors.blueGrey,
+                                  icon: Icon(Icons.favorite),
+                                  iconSize: 30,
+                                  onPressed: (marker != null && markerProperties?.bookmarked != true)? onFavPlace: onUnFavPlace ,
+                                );
+                              }
                           ),
+
+
                           IconButton(
                             icon: Icon(Icons.delete),
                             iconSize: 30,

@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:core' ;
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:my_favorite_places/screens/home_page/custom_marker.dart';
-import 'base_bloc.dart';
 import 'package:my_favorite_places/provider/main_map_provider.dart';
+
+import 'base_bloc.dart';
 
 class MainMapBloc implements BaseBloc{
 
@@ -14,12 +14,13 @@ class MainMapBloc implements BaseBloc{
   // Define broadcast because this stream is listened in more than 1 place in the widget tree
   final markerActionsDialogController = StreamController.broadcast();
   final selectedMarkerController = StreamController();
+  final markerFavUnfavController = StreamController.broadcast();
 
   Stream get  getMarkersViaStream => markersController.stream;
   Stream get  addressSearchBarStream => addressSearchBarController.stream;
   Stream get  markerActionsDialogStream => markerActionsDialogController.stream;
   Stream get  getSelectedMarkerStream => selectedMarkerController.stream;
-
+  Stream get  markerFavUnfavStream => markerFavUnfavController.stream;
 
   Map<MarkerId, Marker> getMarkersViaProvider(){
     return mainMapProvider?.markers;
@@ -39,6 +40,20 @@ class MainMapBloc implements BaseBloc{
   void removeMarker(Marker marker){
     mainMapProvider.deleteMarker(marker);
     markersController.sink.add(mainMapProvider.markers);
+  }
+
+  void favMarker(Marker marker){
+    mainMapProvider.favMarker(marker.markerId);
+//    showMarkerActionsDialog();
+    markerFavUnfavController.sink.add(mainMapProvider.getMarkerProperties(marker.markerId));
+  }
+
+  void unFavMarker(Marker marker){
+    mainMapProvider.unFavMarker(marker.markerId);
+
+    markerFavUnfavController.sink.add(mainMapProvider.getMarkerProperties(marker.markerId));
+
+//    showMarkerActionsDialog();
   }
 
 
@@ -72,10 +87,7 @@ class MainMapBloc implements BaseBloc{
     selectedMarkerController.sink.add(mainMapProvider.selectedMarker);
   }
 
-//  void favMarker(Marker marker){
-//    mainMapProvider.favMarker(marker.markerId);
-////    selectedMarkerController
-//  }
+
 
 
   @override
@@ -84,6 +96,8 @@ class MainMapBloc implements BaseBloc{
     addressSearchBarController.close();
     markerActionsDialogController.close();
     selectedMarkerController.close();
+
+    markerFavUnfavController.close();
   }
 
 }
