@@ -3,6 +3,7 @@ import 'dart:core' ;
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_favorite_places/provider/main_map_provider.dart';
+import 'package:my_favorite_places/screens/home_page/marker_properties.dart';
 
 import 'base_bloc.dart';
 
@@ -43,15 +44,24 @@ class MainMapBloc implements BaseBloc{
   }
 
   void favMarker(Marker marker){
-    mainMapProvider.favMarker(marker.markerId);
+    MarkerProperties mp = mainMapProvider.favMarker(marker.markerId);
+//    MarkerProperties mp = mainMapProvider.getMarkerProperties(marker.markerId);
+    print('Controller method - mp after fav');
+    print('$mp');
+
 //    showMarkerActionsDialog();
-    markerFavUnfavController.sink.add(mainMapProvider.getMarkerProperties(marker.markerId));
+    markerFavUnfavController.sink.add(
+      mp
+//        mainMapProvider.getMarkerProperties(marker.markerId)
+    );
   }
 
   void unFavMarker(Marker marker){
     mainMapProvider.unFavMarker(marker.markerId);
-
-    markerFavUnfavController.sink.add(mainMapProvider.getMarkerProperties(marker.markerId));
+    MarkerProperties mp = mainMapProvider.getMarkerProperties(marker.markerId);
+    print('mp after fav');
+    print('mp');
+    markerFavUnfavController.sink.add(mp);
 
 //    showMarkerActionsDialog();
   }
@@ -85,6 +95,10 @@ class MainMapBloc implements BaseBloc{
   void setSelectedMarker(Marker marker){
     mainMapProvider.selectedMarker = marker;
     selectedMarkerController.sink.add(mainMapProvider.selectedMarker);
+  }
+
+  MarkerProperties getSelectedMarkerProperties(Marker marker){
+    return mainMapProvider.getMarkerProperties(marker.markerId);
   }
 
 

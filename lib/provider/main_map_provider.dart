@@ -40,15 +40,31 @@ class MainMapProvider {
     return null;
   }
 
-  void favMarker(MarkerId markerId){
+  void setMarkerProperties(MarkerId markerId, MarkerProperties mp){
+    if( markerProperties.containsKey(markerId) ){
+      markerProperties[markerId] = mp;
+    }
+  }
+
+  MarkerProperties favMarker(MarkerId markerId){
     MarkerProperties mp = getMarkerProperties(markerId);
+    print('Marker id');
     print(markerId);
+    print('Marker Properties');
     print(mp);
     mp?.bookmarked = true;
+
+    setMarkerProperties(markerId, mp);
+    return mp;
   }
 
   void unFavMarker(MarkerId markerId){
     MarkerProperties mp = getMarkerProperties(markerId);
+
+    print('unfav Marker id');
+    print(markerId);
+    print('Marker Properties');
+    print(mp);
     mp?.bookmarked = false;
   }
 
